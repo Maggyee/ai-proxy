@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nishiki-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nishiki
+      POSTGRES_USER: nishiki
+      POSTGRES_PASSWORD: nishiki
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nishiki -d nishiki"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  ai-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nishiki-ai-proxy
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8787:8787"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8787/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  postgres_data:

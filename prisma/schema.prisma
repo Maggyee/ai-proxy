@@ -1,0 +1,195 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String              @id
+  email           String              @unique
+  emailVerifiedAt DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  refreshTokens   AuthRefreshToken[]
+  preferences     UserPreference?
+  sources         UserSource[]
+  sourceGroups    UserSourceGroup[]
+  savedPosts      UserSavedPost[]
+  likedPosts      UserLikedPost[]
+  readingProgress UserReadingProgress[]
+  aiSummaries     UserAiSummary[]
+  aiThreads       UserAiThread[]
+  syncChanges     SyncChangeLog[]
+}
+
+model AuthEmailCode {
+  id         String   @id
+  email      String
+  codeHash   String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([email, createdAt(sort: Desc)])
+}
+
+model AuthRefreshToken {
+  id        String   @id
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+}
+
+model UserPreference {
+  userId                String   @id
+  themeMode             String   @default("system")
+  fontScale             Float    @default(1)
+  selectedSourceBaseUrl String?
+  sourceMode            String   @default("single")
+  selectedGroupId       String?
+  updatedAt             DateTime @default(now())
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserSource {
+  id        String                  @id
+  userId    String
+  baseUrl   String
+  name      String
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @default(now())
+  deletedAt DateTime?
+  user      User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  members   UserSourceGroupMember[]
+
+  @@unique([userId, baseUrl])
+  @@index([userId, updatedAt(sort: Desc)])
+}
+
+model UserSourceGroup {
+  id        String                  @id
+  userId    String
+  name      String
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @default(now())
+  deletedAt DateTime?
+  user      User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  members   UserSourceGroupMember[]
+
+  @@index([userId, updatedAt(sort: Desc)])
+}
+
+model UserSourceGroupMember {
+  groupId   String
+  sourceId  String
+  sortOrder Int             @default(0)
+  group     UserSourceGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  source    UserSource      @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, sourceId])
+}
+
+model UserSavedPost {
+  userId        String
+  sourceBaseUrl String
+  postId        Int
+  savedAt       DateTime
+  updatedAt     DateTime @default(now())
+  deletedAt     DateTime?
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, sourceBaseUrl, postId])
+  @@index([userId, updatedAt(sort: Desc)])
+}
+
+model UserLikedPost {
+  userId        String
+  sourceBaseUrl String
+  postId        Int
+  likedAt       DateTime
+  updatedAt     DateTime @default(now())
+  deletedAt     DateTime?
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, sourceBaseUrl, postId])
+  @@index([userId, updatedAt(sort: Desc)])
+}
+
+model UserReadingProgress {
+  userId        String
+  sourceBaseUrl String
+  postId        Int
+  progress      Float
+  lastReadAt    DateTime
+  updatedAt     DateTime @default(now())
+  deletedAt     DateTime?
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, sourceBaseUrl, postId])
+  @@index([userId, updatedAt(sort: Desc)])
+}
+
+model UserAiSummary {
+  userId        String
+  sourceBaseUrl String
+  postId        Int
+  summary       String
+  keyPointsJson String
+  keywordsJson  String
+  provider      String?
+  model         String?
+  updatedAt     DateTime @default(now())
+  deletedAt     DateTime?
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, sourceBaseUrl, postId])
+  @@index([userId, updatedAt(sort: Desc)])
+}
+
+model UserAiThread {
+  id            String          @id
+  userId        String
+  sourceBaseUrl String
+  postId        Int
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @default(now())
+  deletedAt     DateTime?
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages      UserAiMessage[]
+
+  @@index([userId, updatedAt(sort: Desc)])
+}
+
+model UserAiMessage {
+  id        String       @id
+  threadId  String
+  role      String
+  content   String
+  createdAt DateTime
+  updatedAt DateTime     @default(now())
+  deletedAt DateTime?
+  thread    UserAiThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([threadId, createdAt(sort: Asc)])
+}
+
+model SyncChangeLog {
+  id         String   @id @default(cuid())
+  userId     String
+  entityType String
+  entityId   String
+  op         String
+  version    BigInt   @default(autoincrement())
+  changedAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, version(sort: Desc)])
+}
