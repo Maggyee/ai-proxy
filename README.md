@@ -74,6 +74,25 @@ flutter build web --dart-define=WP_BASE_URL=https://blog.nishiki.icu --dart-defi
 
 ## Routes
 
+### 健康检查
 - `GET /api/health`
-- `POST /api/ai/summarize`
-- `POST /api/ai/chat`
+
+### AI 功能
+- `POST /api/ai/summarize` — 文章摘要
+- `POST /api/ai/chat` — 文章问答
+
+### 认证
+- `POST /api/auth/email/request-code` — 请求邮箱验证码
+- `POST /api/auth/email/verify-code` — 验证码登录/注册
+- `POST /api/auth/refresh` — 刷新 Token
+- `POST /api/auth/logout` — 登出
+- `GET /api/me` — 获取当前用户信息（需认证）
+
+### 多端同步
+- `GET /api/sync/bootstrap` — 全量拉取用户数据（需认证）
+- `GET /api/sync/changes?sinceVersion=N` — 增量拉取变更（需认证）
+- `POST /api/sync/push` — 推送本地变更（需认证）
+- `POST /api/sync/reconcile` — 双向合并同步（需认证）
+
+### 实时推送
+- `WS /ws?token=xxx` — WebSocket 连接（需认证）

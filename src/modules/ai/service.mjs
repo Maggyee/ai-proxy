@@ -307,27 +307,30 @@ async function generateText(prompt, config) {
   });
 }
 
+// 解析 AI 返回的摘要文本，提取【摘要】【关键要点】【关键词】三个部分
 function parseSummaryResponse(text) {
   let summary = '';
   let keyPoints = [];
   let keywords = [];
 
-  const summaryMatch = RegExp('【摘要】\\s*([\\s\\S]*?)(?=【|$)').firstMatch(text);
+  // 使用 JS 的 RegExp.exec() 替代 Dart 的 .firstMatch()
+  const summaryMatch = /【摘要】\s*([\s\S]*?)(?=【|$)/.exec(text);
   if (summaryMatch) {
-    summary = summaryMatch.group(1)?.trim() ?? '';
+    summary = (summaryMatch[1] ?? '').trim();
   }
 
-  const pointsMatch = RegExp('【关键要点】\\s*([\\s\\S]*?)(?=【|$)').firstMatch(text);
+  const pointsMatch = /【关键要点】\s*([\s\S]*?)(?=【|$)/.exec(text);
   if (pointsMatch) {
-    keyPoints = (pointsMatch.group(1) ?? '')
+    keyPoints = (pointsMatch[1] ?? '')
       .split('\n')
-      .map((line) => line.replaceAll(/^[*.\-\d+、]+\s*/, '').trim())
+      // 使用 JS 的 .replace() 替代 Dart 的 .replaceAll()
+      .map((line) => line.replace(/^[*.\-\d+、]+\s*/, '').trim())
       .filter(Boolean);
   }
 
-  const keywordsMatch = RegExp('【关键词】\\s*([\\s\\S]*?)(?=【|$)').firstMatch(text);
+  const keywordsMatch = /【关键词】\s*([\s\S]*?)(?=【|$)/.exec(text);
   if (keywordsMatch) {
-    keywords = (keywordsMatch.group(1) ?? '')
+    keywords = (keywordsMatch[1] ?? '')
       .split(/[、,，\s]+/)
       .filter(Boolean);
   }
