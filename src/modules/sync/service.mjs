@@ -69,6 +69,16 @@ async function upsertSource(userId, data) {
     update: {
       baseUrl: String(data.baseUrl ?? '').trim(),
       name: String(data.name ?? '').trim() || String(data.baseUrl ?? '').trim(),
+      // 来源类型：缺失时回退默认值 wordpress旧客户端不传该字段也能正常写入
+      sourceType: data.sourceType ? String(data.sourceType).trim() : undefined,
+      // RSS feed 地址：缺失时不覆盖已有内容
+      feedUrl: Object.prototype.hasOwnProperty.call(data, 'feedUrl')
+        ? (data.feedUrl ? String(data.feedUrl).trim() : null)
+        : undefined,
+      // 站点主页地址
+      siteUrl: Object.prototype.hasOwnProperty.call(data, 'siteUrl')
+        ? (data.siteUrl ? String(data.siteUrl).trim() : null)
+        : undefined,
       updatedAt: parseDate(data.updatedAt),
       deletedAt: data.deletedAt ? parseDate(data.deletedAt) : null,
     },
@@ -77,6 +87,10 @@ async function upsertSource(userId, data) {
       userId,
       baseUrl: String(data.baseUrl ?? '').trim(),
       name: String(data.name ?? '').trim() || String(data.baseUrl ?? '').trim(),
+      // 创建时如果客户端不带此字段，默认为 wordpress
+      sourceType: data.sourceType ? String(data.sourceType).trim() : 'wordpress',
+      feedUrl: data.feedUrl ? String(data.feedUrl).trim() : null,
+      siteUrl: data.siteUrl ? String(data.siteUrl).trim() : null,
       createdAt: parseDate(data.createdAt),
       updatedAt: parseDate(data.updatedAt),
       deletedAt: data.deletedAt ? parseDate(data.deletedAt) : null,
@@ -352,6 +366,10 @@ function serializeSource(source) {
     id: source.id,
     baseUrl: source.baseUrl,
     name: source.name,
+    // RSS 扩展字段：旧数据客户端不使用这几个字段，安全默认回退
+    sourceType: source.sourceType ?? 'wordpress',
+    feedUrl: source.feedUrl ?? null,
+    siteUrl: source.siteUrl ?? null,
     createdAt: source.createdAt.toISOString(),
     updatedAt: source.updatedAt.toISOString(),
     deletedAt: source.deletedAt?.toISOString() ?? null,

@@ -60,15 +60,21 @@ model UserPreference {
 }
 
 model UserSource {
-  id        String                  @id
-  userId    String
-  baseUrl   String
-  name      String
-  createdAt DateTime                @default(now())
-  updatedAt DateTime                @default(now())
-  deletedAt DateTime?
-  user      User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  members   UserSourceGroupMember[]
+  id         String                  @id
+  userId     String
+  baseUrl    String
+  name       String
+  // 来源类型：wordpress | rss（默认 wordpress，向后兼容旧数据）
+  sourceType String                  @default("wordpress")
+  // RSS feed 实际地址（仅 rss 类型使用）
+  feedUrl    String?
+  // 站点主页地址（可选，供界面展示）
+  siteUrl    String?
+  createdAt  DateTime                @default(now())
+  updatedAt  DateTime                @default(now())
+  deletedAt  DateTime?
+  user       User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  members    UserSourceGroupMember[]
 
   @@unique([userId, baseUrl])
   @@index([userId, updatedAt(sort: Desc)])
